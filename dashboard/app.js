@@ -12,9 +12,12 @@ const state = {
   type: 'all',
   page: 1,
   limit: 10,
-  sort: 'posted_desc',
+  sort: 'match_desc',
   contacts: [],
   contactQuery: '',
+  jobsCache: {},
+  candidateProfile: null,
+  availableSkillsCatalog: []
 };
 
 // DOM References
@@ -77,6 +80,7 @@ function navigateTo(page) {
 document.addEventListener('DOMContentLoaded', () => {
   fetchStats();
   fetchFilterOptions();
+  fetchCandidateProfile();
   fetchJobs();
   fetchContacts();
   attachEventListeners();
@@ -129,12 +133,82 @@ function attachEventListeners() {
     fetchJobs();
   });
 
+  // Sort selector
+  const sortSelect = document.getElementById('sortSelect');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', (e) => {
+      state.sort = e.target.value;
+      state.page = 1;
+      fetchJobs();
+    });
+  }
+
   // Rows per page
   limitSelect.addEventListener('change', (e) => {
     state.limit = parseInt(e.target.value, 10) || 10;
     state.page = 1;
     fetchJobs();
   });
+
+  // Profile add skill handlers
+  const addSkillBtn = document.getElementById('addSkillBtn');
+  const customSkillInput = document.getElementById('customSkillInput');
+  if (addSkillBtn && customSkillInput) {
+    addSkillBtn.addEventListener('click', () => {
+      const val = customSkillInput.value.trim();
+      if (val) {
+        addSkill(val);
+        customSkillInput.value = '';
+      }
+    });
+    customSkillInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = customSkillInput.value.trim();
+        if (val) {
+          addSkill(val);
+          customSkillInput.value = '';
+        }
+      }
+    });
+  }
+
+  // Profile add role handlers
+  const addRoleBtn = document.getElementById('addRoleBtn');
+  const customRoleInput = document.getElementById('customRoleInput');
+  if (addRoleBtn && customRoleInput) {
+    addRoleBtn.addEventListener('click', () => {
+      const val = customRoleInput.value.trim();
+      if (val) {
+        addRole(val);
+        customRoleInput.value = '';
+      }
+    });
+    customRoleInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = customRoleInput.value.trim();
+        if (val) {
+          addRole(val);
+          customRoleInput.value = '';
+        }
+      }
+    });
+  }
+
+  // Experience level segment buttons
+  const expGroup = document.getElementById('experienceLevelGroup');
+  if (expGroup) {
+    expGroup.addEventListener('click', (e) => {
+      const btn = e.target.closest('.segment-btn');
+      if (!btn) return;
+      document.querySelectorAll('#experienceLevelGroup .segment-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (state.candidateProfile) {
+        state.candidateProfile.experience_level = btn.getAttribute('data-exp');
+      }
+    });
+  }
 
   // Pagination buttons
   prevPageBtn.addEventListener('click', () => {
@@ -262,6 +336,10 @@ async function fetchJobs() {
     if (!res.ok) throw new Error('Failed to fetch jobs');
     const data = await res.json();
 
+    if (data.candidate_profile) {
+      state.candidateProfile = data.candidate_profile;
+    }
+
     renderJobs(data.jobs || []);
     renderPagination(data);
     updateSemanticIntentBadge(data.parsed_intent);
@@ -269,7 +347,7 @@ async function fetchJobs() {
     console.error('Error fetching jobs:', err);
     jobsTableBody.innerHTML = `
       <tr>
-        <td colspan="7" class="empty-state">
+        <td colspan="8" class="empty-state">
           Unable to load internship opportunities. Please verify server connection.
         </td>
       </tr>
@@ -281,7 +359,7 @@ async function fetchJobs() {
 function renderLoadingState() {
   jobsTableBody.innerHTML = `
     <tr>
-      <td colspan="7" class="loading-state">
+      <td colspan="8" class="loading-state">
         <div class="spinner"></div>
         <span>Loading opportunities...</span>
       </td>
@@ -293,7 +371,7 @@ function renderJobs(jobs) {
   if (!jobs || jobs.length === 0) {
     jobsTableBody.innerHTML = `
       <tr>
-        <td colspan="7" class="empty-state">
+        <td colspan="8" class="empty-state">
           <p>No internships match your search or filter criteria.</p>
           <span style="font-size: 0.8rem; color: #9CA3AF; margin-top: 0.25rem; display: block;">
             Try broadening your keywords or clearing the location filter.
@@ -305,8 +383,10 @@ function renderJobs(jobs) {
   }
 
   jobsTableBody.innerHTML = '';
+  state.jobsCache = {};
 
   jobs.forEach(job => {
+    state.jobsCache[job.id] = job;
     const tr = document.createElement('tr');
 
     // Company cell
@@ -326,18 +406,36 @@ function renderJobs(jobs) {
       <div class="role-cell-wrap">
         <div class="role-title-row">
           <span class="role-title">${escapeHtml(job.role)}</span>
-          ${job.relevance_score ? `<span class="relevance-pill">${job.relevance_score}% match</span>` : ''}
         </div>
     `;
-    if (job.match_reasons && job.match_reasons.length > 0) {
+    if (job.strong_matches && job.strong_matches.length > 0) {
       roleHtml += `
         <div class="match-reasons-row">
-          ${job.match_reasons.map(r => `<span class="match-tag">${escapeHtml(r)}</span>`).join('')}
+          ${job.strong_matches.slice(0, 3).map(r => `<span class="match-tag" title="Strong matched skill">✓ ${escapeHtml(r)}</span>`).join('')}
+          ${job.missing_skills && job.missing_skills.length > 0 ? `<span class="match-tag" style="color: #B45309; background: #FFFBEB; border-color: #FDE68A;" title="Missing required/desired skill">✕ ${escapeHtml(job.missing_skills[0])}</span>` : ''}
         </div>
       `;
     }
     roleHtml += `</div>`;
     roleCell.innerHTML = roleHtml;
+
+    // Match Score cell
+    const matchCell = document.createElement('td');
+    matchCell.className = 'col-match';
+    const m = job.match || {
+      score: 75,
+      match_grade: 'Strong Match',
+      strong_matches: [],
+      missing_skills: []
+    };
+    const gradeClass = 'grade-' + (m.match_grade || 'strong-match').toLowerCase().replace(/\s+/g, '-');
+    matchCell.innerHTML = `
+      <button type="button" class="match-badge-btn ${gradeClass}" onclick="openMatchModal('${job.id}')" title="Click for explainable match breakdown">
+        <span class="match-badge-score">${m.score}%</span>
+        <span class="match-badge-label">Match</span>
+        <span class="match-badge-chevron">ⓘ</span>
+      </button>
+    `;
 
     // Location cell
     const locationCell = document.createElement('td');
@@ -384,6 +482,7 @@ function renderJobs(jobs) {
 
     tr.appendChild(companyCell);
     tr.appendChild(roleCell);
+    tr.appendChild(matchCell);
     tr.appendChild(locationCell);
     tr.appendChild(portalCell);
     tr.appendChild(typeCell);
@@ -590,4 +689,280 @@ window.clearSemanticQuery = function() {
   const badge = document.getElementById('semanticIntentBadge');
   if (badge) badge.style.display = 'none';
   fetchJobs();
+};
+
+// ── Explainable Match Modal Logic ───────────────────────────
+window.openMatchModal = function(jobId) {
+  const job = state.jobsCache[jobId];
+  if (!job) return;
+
+  const modal = document.getElementById('matchModal');
+  if (!modal) return;
+
+  const m = job.match || {
+    score: 80,
+    match_percentage: '80% Match',
+    match_grade: 'Strong Match',
+    strong_matches: [],
+    missing_skills: [],
+    breakdown: { skills: 80, role: 80, semantic: 80, location: 80, work_mode: 80, experience: 80 },
+    summary: 'Calculated using candidate skills and role criteria.'
+  };
+
+  document.getElementById('modalCompany').textContent = job.company || 'Company';
+  document.getElementById('modalRole').textContent = job.role || 'Role';
+  document.getElementById('modalScoreNum').textContent = `${m.score}%`;
+  document.getElementById('modalGradeTitle').textContent = m.match_grade || 'Match Evaluation';
+  document.getElementById('modalSummaryDesc').textContent = m.summary || '';
+
+  // Strong matches
+  const strongWrap = document.getElementById('modalStrongTags');
+  if (m.strong_matches && m.strong_matches.length > 0) {
+    strongWrap.innerHTML = m.strong_matches.map(s => `<span class="match-pill green">✓ ${escapeHtml(s)}</span>`).join('');
+  } else {
+    strongWrap.innerHTML = `<span class="empty-skills-msg">None explicitly detected in text</span>`;
+  }
+
+  // Missing skills
+  const missingWrap = document.getElementById('modalMissingTags');
+  if (m.missing_skills && m.missing_skills.length > 0) {
+    missingWrap.innerHTML = m.missing_skills.map(s => `<span class="match-pill amber">✕ ${escapeHtml(s)}</span>`).join('');
+  } else {
+    missingWrap.innerHTML = `<span class="empty-skills-msg" style="color: #059669; font-weight: 600;">✓ All key requirements met!</span>`;
+  }
+
+  // Dimension breakdown progress bars
+  const barsWrap = document.getElementById('modalBreakdownBars');
+  const b = m.breakdown || {};
+  const dimensions = [
+    { label: 'Technical Skills Fit', val: b.skills || m.score },
+    { label: 'Role Alignment', val: b.role || m.score },
+    { label: 'Semantic Concept Similarity', val: b.semantic || m.score },
+    { label: 'Location Affinity', val: b.location || 100 },
+    { label: 'Work Mode Compatibility', val: b.work_mode || 100 },
+    { label: 'Experience Level Suitability', val: b.experience || 100 }
+  ];
+
+  barsWrap.innerHTML = dimensions.map(d => `
+    <div class="breakdown-bar-item">
+      <div class="breakdown-bar-header">
+        <span>${d.label}</span>
+        <span class="breakdown-bar-value">${d.val}%</span>
+      </div>
+      <div class="breakdown-bar-track">
+        <div class="breakdown-bar-fill" style="width: ${d.val}%;"></div>
+      </div>
+    </div>
+  `).join('');
+
+  if (state.candidateProfile && state.candidateProfile.name) {
+    const sc = state.candidateProfile.skills ? state.candidateProfile.skills.length : 13;
+    document.getElementById('modalCandidateNote').textContent = `Evaluated against ${state.candidateProfile.name}'s profile (${sc} skills)`;
+  }
+
+  modal.style.display = 'flex';
+};
+
+window.closeMatchModal = function(e) {
+  if (e && e.target && e.target.id !== 'matchModal' && !e.target.classList.contains('match-modal-close')) {
+    return;
+  }
+  const modal = document.getElementById('matchModal');
+  if (modal) modal.style.display = 'none';
+};
+
+// ── Candidate Profile Editor ────────────────────────────────
+async function fetchCandidateProfile() {
+  try {
+    const res = await fetch('/api/profile');
+    if (!res.ok) throw new Error('Failed to load profile');
+    const data = await res.json();
+    state.candidateProfile = data.profile;
+    state.availableSkillsCatalog = data.available_skills || [];
+    renderProfileEditor();
+  } catch (err) {
+    console.error('Error loading candidate profile:', err);
+  }
+}
+
+function renderProfileEditor() {
+  if (!state.candidateProfile) return;
+  const p = state.candidateProfile;
+
+  // Header display
+  const nameEl = document.getElementById('profileNameDisplay');
+  const emailEl = document.getElementById('profileEmailDisplay');
+  const headlineEl = document.getElementById('profileHeadlineBadge');
+  const countEl = document.getElementById('profileSkillsCount');
+
+  if (nameEl) nameEl.textContent = p.name || 'Candidate';
+  if (emailEl) emailEl.textContent = p.email || '';
+  if (headlineEl) headlineEl.textContent = p.headline || 'Candidate';
+  if (countEl) countEl.textContent = (p.skills || []).length;
+
+  // Skills tag cloud
+  const skillsCloud = document.getElementById('profileSkillsCloud');
+  if (skillsCloud) {
+    skillsCloud.innerHTML = (p.skills || []).map(skill => `
+      <span class="interactive-tag active-tag">
+        <span>${escapeHtml(skill)}</span>
+        <button type="button" class="tag-remove-btn" onclick="removeSkill('${escapeHtml(skill)}')" title="Remove skill">×</button>
+      </span>
+    `).join('');
+  }
+
+  // Suggested skills chips (from catalog not already in profile)
+  const chipsWrap = document.getElementById('suggestChipsContainer');
+  if (chipsWrap && state.availableSkillsCatalog) {
+    const userSkillsLower = new Set((p.skills || []).map(s => s.toLowerCase()));
+    const unpicked = state.availableSkillsCatalog.filter(s => !userSkillsLower.has(s.name.toLowerCase()));
+    chipsWrap.innerHTML = unpicked.slice(0, 10).map(s => `
+      <button type="button" class="suggest-chip" onclick="addSkill('${escapeHtml(s.name)}')">+ ${escapeHtml(s.name)}</button>
+    `).join('');
+  }
+
+  // Target roles
+  const rolesCloud = document.getElementById('profileRolesCloud');
+  if (rolesCloud) {
+    rolesCloud.innerHTML = (p.target_roles || []).map(role => `
+      <span class="interactive-tag">
+        <span>${escapeHtml(role)}</span>
+        <button type="button" class="tag-remove-btn" onclick="removeRole('${escapeHtml(role)}')" title="Remove role">×</button>
+      </span>
+    `).join('');
+  }
+
+  // Experience level
+  document.querySelectorAll('#experienceLevelGroup .segment-btn').forEach(btn => {
+    if (btn.getAttribute('data-exp') === p.experience_level) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Preferred locations
+  const locsCloud = document.getElementById('profileLocationsCloud');
+  if (locsCloud) {
+    const tierOne = ["Pune", "Bangalore", "Mumbai", "Hyderabad", "Delhi / NCR", "Remote", "Indore", "Nagpur", "Chennai"];
+    const userLocs = new Set((p.preferred_locations || []).map(l => l.toLowerCase()));
+    locsCloud.innerHTML = tierOne.map(city => {
+      const isSel = userLocs.has(city.toLowerCase());
+      return `
+        <button type="button" class="interactive-tag ${isSel ? 'active-tag' : ''}" onclick="togglePreferredLocation('${city}')">
+          <span>${city}</span>
+          ${isSel ? '✓' : '+'}
+        </button>
+      `;
+    }).join('');
+  }
+
+  // Preferred work modes
+  const modeInputs = document.querySelectorAll('#profileWorkModes input[type="checkbox"]');
+  const userModes = new Set((p.preferred_work_modes || []).map(m => m.toLowerCase()));
+  modeInputs.forEach(cb => {
+    cb.checked = userModes.has(cb.value.toLowerCase());
+  });
+}
+
+window.addSkill = function(skillName) {
+  if (!state.candidateProfile || !skillName) return;
+  if (!state.candidateProfile.skills) state.candidateProfile.skills = [];
+  const exists = state.candidateProfile.skills.some(s => s.toLowerCase() === skillName.toLowerCase());
+  if (!exists) {
+    state.candidateProfile.skills.push(skillName);
+    renderProfileEditor();
+  }
+};
+
+window.removeSkill = function(skillName) {
+  if (!state.candidateProfile || !state.candidateProfile.skills) return;
+  state.candidateProfile.skills = state.candidateProfile.skills.filter(s => s.toLowerCase() !== skillName.toLowerCase());
+  renderProfileEditor();
+};
+
+window.addRole = function(roleName) {
+  if (!state.candidateProfile || !roleName) return;
+  if (!state.candidateProfile.target_roles) state.candidateProfile.target_roles = [];
+  const exists = state.candidateProfile.target_roles.some(r => r.toLowerCase() === roleName.toLowerCase());
+  if (!exists) {
+    state.candidateProfile.target_roles.push(roleName);
+    renderProfileEditor();
+  }
+};
+
+window.removeRole = function(roleName) {
+  if (!state.candidateProfile || !state.candidateProfile.target_roles) return;
+  state.candidateProfile.target_roles = state.candidateProfile.target_roles.filter(r => r.toLowerCase() !== roleName.toLowerCase());
+  renderProfileEditor();
+};
+
+window.togglePreferredLocation = function(city) {
+  if (!state.candidateProfile) return;
+  if (!state.candidateProfile.preferred_locations) state.candidateProfile.preferred_locations = [];
+  const idx = state.candidateProfile.preferred_locations.findIndex(l => l.toLowerCase() === city.toLowerCase());
+  if (idx >= 0) {
+    state.candidateProfile.preferred_locations.splice(idx, 1);
+  } else {
+    state.candidateProfile.preferred_locations.push(city);
+  }
+  renderProfileEditor();
+};
+
+window.saveCandidateProfile = async function() {
+  if (!state.candidateProfile) return;
+  
+  // Read current checked work modes
+  const checkedModes = [];
+  document.querySelectorAll('#profileWorkModes input[type="checkbox"]:checked').forEach(cb => {
+    checkedModes.push(cb.value);
+  });
+  state.candidateProfile.preferred_work_modes = checkedModes;
+
+  const btn = document.getElementById('saveProfileBtn');
+  if (btn) btn.textContent = 'Saving & Computing...';
+
+  try {
+    const res = await fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state.candidateProfile)
+    });
+    if (!res.ok) throw new Error('Save failed');
+    const data = await res.json();
+    state.candidateProfile = data.profile;
+
+    if (btn) btn.textContent = 'Saved! ✓';
+    setTimeout(() => {
+      if (btn) btn.textContent = 'Save Profile & Update Matches ✨';
+    }, 2000);
+
+    // Refresh jobs with updated profile match scoring
+    state.page = 1;
+    fetchJobs();
+  } catch (err) {
+    console.error('Error saving profile:', err);
+    if (btn) btn.textContent = 'Error saving profile';
+  }
+};
+
+window.resetProfileToDefault = async function() {
+  if (!confirm('Reset candidate profile to default settings?')) return;
+  try {
+    const defaultProfile = {
+      name: "Lalit Chaudhari",
+      email: "lalitchoudhari851@gmail.com",
+      headline: "AI/ML Engineer & GenAI Developer (Fresher)",
+      skills: ["Python", "RAG", "LLM", "LangChain", "GenAI", "Machine Learning", "Deep Learning", "PyTorch", "NLP", "FastAPI", "SQL", "Docker", "Agentic AI"],
+      target_roles: ["AI/ML Engineer Intern", "GenAI Developer Intern", "LLM Engineer Intern", "Machine Learning Intern", "Data Science Intern"],
+      experience_level: "Fresher / Intern",
+      preferred_locations: ["Pune", "Bangalore", "Remote", "Mumbai", "Hyderabad"],
+      preferred_work_modes: ["Remote", "Hybrid", "On-site"]
+    };
+    state.candidateProfile = defaultProfile;
+    await saveCandidateProfile();
+    renderProfileEditor();
+  } catch (err) {
+    console.error('Error resetting profile:', err);
+  }
 };

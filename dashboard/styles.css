@@ -1180,6 +1180,636 @@ body {
 }
 
 /* ==========================================================================
+   Semantic Job Matching & Explainer Modal Styles
+   ========================================================================== */
+.sort-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.sort-selector select {
+  font-family: inherit;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.sort-selector select:focus {
+  border-color: var(--accent-black);
+}
+
+/* Table match column & button */
+.col-match {
+  width: 120px;
+  white-space: nowrap;
+}
+
+.match-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  background: #F4F4F5;
+  color: #18181B;
+}
+
+.match-badge-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.match-badge-btn.grade-exceptional-match {
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+  color: #065F46;
+}
+
+.match-badge-btn.grade-exceptional-match:hover {
+  background: #D1FAE5;
+  border-color: #6EE7B7;
+}
+
+.match-badge-btn.grade-strong-match {
+  background: #F0F9FF;
+  border-color: #BAE6FD;
+  color: #0369A1;
+}
+
+.match-badge-btn.grade-strong-match:hover {
+  background: #E0F2FE;
+  border-color: #7DD3FC;
+}
+
+.match-badge-btn.grade-moderate-match {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+  color: #92400E;
+}
+
+.match-badge-btn.grade-moderate-match:hover {
+  background: #FEF3C7;
+}
+
+.match-badge-btn.grade-low-alignment {
+  background: #F4F4F5;
+  border-color: #E4E4E7;
+  color: #52525B;
+}
+
+.match-badge-chevron {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   Explainable Match Details Modal Dialog
+   ========================================================================== */
+.match-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.match-modal-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: modalScaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleUp {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.match-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 1.25rem;
+}
+
+.match-modal-company {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.match-modal-role {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.2rem;
+  letter-spacing: -0.02em;
+}
+
+.match-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 0.4rem;
+  border-radius: 50%;
+  transition: color 0.15s ease;
+}
+
+.match-modal-close:hover {
+  color: var(--text-primary);
+}
+
+/* Match Hero Block */
+.match-hero-block {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: #FAFAFA;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+}
+
+.match-score-circle {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #ECFDF5;
+  border: 2px solid #10B981;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.match-score-number {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #065F46;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.match-score-text {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.match-hero-text {
+  flex: 1;
+}
+
+.match-grade-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #09090B;
+}
+
+.match-summary-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+  line-height: 1.45;
+}
+
+/* Skills Comparison Grid */
+.match-skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.skills-box {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skills-box.strong-box {
+  background: #F0FDF4;
+  border-color: #BBF7D0;
+}
+
+.skills-box.missing-box {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+}
+
+.skills-box-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.skills-box.strong-box .skills-box-title {
+  color: #15803D;
+}
+
+.skills-box.missing-box .skills-box-title {
+  color: #B45309;
+}
+
+.skills-tags-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.skills-tags-wrap .match-pill {
+  font-size: 0.775rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.skills-tags-wrap .match-pill.green {
+  background: #DCFCE7;
+  border: 1px solid #86EFAC;
+  color: #14532D;
+}
+
+.skills-tags-wrap .match-pill.amber {
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  color: #78350F;
+}
+
+.skills-tags-wrap .empty-skills-msg {
+  font-size: 0.8rem;
+  color: var(--text-subtle);
+  font-style: italic;
+}
+
+/* Dimension Breakdown Bars */
+.breakdown-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.breakdown-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.breakdown-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.breakdown-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.breakdown-bar-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.breakdown-bar-value {
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.breakdown-bar-track {
+  width: 100%;
+  height: 6px;
+  background: #F4F4F5;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.breakdown-bar-fill {
+  height: 100%;
+  background: #18181B;
+  border-radius: 9999px;
+  transition: width 0.4s ease-out;
+}
+
+/* Modal footer */
+.match-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--border-light);
+  padding-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.candidate-note {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+}
+
+.btn-profile-jump {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--accent-black);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: opacity 0.15s ease;
+}
+
+.btn-profile-jump:hover {
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Candidate Profile Interactive Editor Styles
+   ========================================================================== */
+.section-heading-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.section-subtext {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+}
+
+.interactive-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.interactive-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  background: #F4F4F5;
+  border: 1px solid #E4E4E7;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: #18181B;
+  transition: all 0.15s ease;
+}
+
+.interactive-tag:hover {
+  background: #E4E4E7;
+}
+
+.interactive-tag.active-tag {
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+  color: #065F46;
+}
+
+.tag-remove-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  line-height: 1;
+  color: #71717A;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.tag-remove-btn:hover {
+  color: #EF4444;
+}
+
+/* Add skill & suggestions row */
+.add-skill-bar {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skill-input-group, .add-role-input-group {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 500px;
+}
+
+.skill-input-group input, .add-role-input-group input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.skill-input-group input:focus, .add-role-input-group input:focus {
+  border-color: var(--accent-black);
+}
+
+.add-skill-btn {
+  background: #18181B;
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.add-skill-btn:hover {
+  opacity: 0.85;
+}
+
+.suggested-skills-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.suggest-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.suggest-chips-wrap {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.suggest-chip {
+  background: #FFFFFF;
+  border: 1px dashed var(--border-light);
+  border-radius: 9999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.suggest-chip:hover {
+  border-style: solid;
+  border-color: #18181B;
+  color: #18181B;
+  background: #F4F4F5;
+}
+
+/* Segmented Control for Experience */
+.segmented-control {
+  display: inline-flex;
+  background: #F4F4F5;
+  border: 1px solid #E4E4E7;
+  border-radius: var(--radius-md);
+  padding: 0.25rem;
+  gap: 0.25rem;
+}
+
+.segment-btn {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.segment-btn.active {
+  background: #FFFFFF;
+  color: #09090B;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Work Modes Checkboxes */
+.work-modes-selector {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.mode-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.mode-checkbox-label input[type="checkbox"] {
+  accent-color: var(--accent-black);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.btn-profile-secondary {
+  background: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 1rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-profile-secondary:hover {
+  background: #F4F4F5;
+}
+
+/* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
 @media (max-width: 992px) {

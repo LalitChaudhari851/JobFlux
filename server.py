@@ -76,7 +76,8 @@ def load_all_jobs():
                         "email": row.get("company_email") or "",
                         "email_priority": row.get("email_priority_score") or "",
                         "application_link": row.get("application_link") or (row.get("company_website") or ""),
-                        "description": row.get("description_snippet") or ""
+                        "description": row.get("description_snippet") or "",
+                        "search_keyword": row.get("search_keyword") or ""
                     })
         except Exception as e:
             print(f"Error loading job_listings.csv: {e}")
@@ -230,6 +231,13 @@ def load_verified_contacts():
 
 
 from utils.semantic_search import semantic_search_jobs, parse_nl_query
+from utils.semantic_matcher import (
+    enrich_jobs_with_matching,
+    load_candidate_profile,
+    save_candidate_profile,
+    get_available_skills,
+    DEFAULT_CANDIDATE_PROFILE
+)
 
 
 class DashboardHandler(SimpleHTTPRequestHandler):
@@ -308,9 +316,21 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             })
             return
 
+        # ── API: Candidate Profile ──────────────────────────────────
+        if path == "/api/profile":
+            profile = load_candidate_profile()
+            skills = get_available_skills()
+            self.send_json({
+                "profile": profile,
+                "available_skills": skills
+            })
+            return
+
         # ── API: Jobs with Search, Filters, Sorting, Pagination ─────
         if path == "/api/jobs":
             jobs = load_all_jobs()
+            cand_profile = load_candidate_profile()
+            jobs = enrich_jobs_with_matching(jobs, cand_profile)
             parsed_intent = None
 
             # 1. Natural Language & Semantic Search
@@ -356,8 +376,12 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 jobs = [j for j in jobs if j.get("type", "").lower() == type_filter.lower()]
 
             # 5. Sorting
-            sort_by = query_params.get("sort", ["posted_desc"])[0]
-            if sort_by == "company_asc":
+            sort_by = query_params.get("sort", ["match_desc" if not q else "relevance"])[0]
+            if sort_by == "match_desc":
+                jobs.sort(key=lambda j: j.get("match_score", 0), reverse=True)
+            elif sort_by == "posted_desc":
+                jobs.sort(key=lambda j: j.get("posted_date") or "", reverse=True)
+            elif sort_by == "company_asc":
                 jobs.sort(key=lambda j: j.get("company", "").lower())
             elif sort_by == "role_asc":
                 jobs.sort(key=lambda j: j.get("role", "").lower())
@@ -366,8 +390,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             elif sort_by == "relevance" and q:
                 # Keep semantic relevance ranking
                 pass
-            elif not q:  # default posted newest when no query
-                jobs.sort(key=lambda j: j.get("posted_date") or "", reverse=True)
+            else:
+                jobs.sort(key=lambda j: j.get("match_score", 0), reverse=True)
 
             total_count = len(jobs)
 
@@ -396,7 +420,16 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 "total_pages": (total_count + limit - 1) // limit if total_count > 0 else 1,
                 "start_index": start_num,
                 "end_index": end_num,
-                "parsed_intent": parsed_intent
+                "parsed_intent": parsed_intent,
+                "candidate_profile": {
+                    "name": cand_profile.get("name"),
+                    "headline": cand_profile.get("headline"),
+                    "skills_count": len(cand_profile.get("skills", [])),
+                    "skills": cand_profile.get("skills", []),
+                    "experience_level": cand_profile.get("experience_level"),
+                    "preferred_locations": cand_profile.get("preferred_locations", []),
+                    "preferred_work_modes": cand_profile.get("preferred_work_modes", [])
+                }
             }
             self.send_json(response)
             return
@@ -457,6 +490,25 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
         # Fallback to static file serving
         return super().do_GET()
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        path = parsed.path
+
+        if path == "/api/profile":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                updated = save_candidate_profile(data)
+                self.send_json({"success": True, "profile": updated})
+                return
+            except Exception as e:
+                self.send_json({"success": False, "error": str(e)}, status=400)
+                return
+
+        self.send_response(404)
+        self.end_headers()
 
     def send_json(self, data, status=200):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
