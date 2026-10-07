@@ -1,0 +1,146 @@
+{
+  "search_keywords": [
+    "AI ML internship Pune",
+    "GenAI internship Pune",
+    "Machine Learning internship PCMC",
+    "Agentic AI internship Pune",
+    "LLM internship Pune",
+    "AI ML internship Mumbai",
+    "AI ML internship Remote",
+    "Machine Learning internship Thane",
+    "GenAI internship Mumbai",
+    "AI engineer intern",
+    "Agentic AI engineer intern",
+    "AI developer intern",
+    "Agentic AI developer intern",
+    "AI ML intern",
+    "AI ML job Remote",
+    "Machine Learning job Remote",
+    "GenAI job Remote",
+    "Agentic AI job Remote",
+    "LLM job Remote",
+    "AI engineer Remote",
+    "Machine Learning engineer Remote",
+    "Agentic AI engineer Remote",
+    "LLM engineer Remote",
+    "AI developer Remote",
+    "AI ML developer Remote",
+    "AI intern Remote",
+    "AI ML intern Remote",
+    "Machine Learning intern Remote",
+    "GenAI intern Remote",
+    "Agentic AI intern Remote",
+    "LLM intern Remote",
+
+    "AI ML internship Bangalore",
+    "GenAI internship Bangalore",
+    "Machine Learning internship Bangalore",
+    "Agentic AI internship Bangalore",
+    "LLM internship Bangalore",
+    "AI engineer Bangalore",
+    "AI startup Bangalore",
+
+    "AI ML internship Delhi",
+    "GenAI internship Delhi",
+    "Machine Learning internship Delhi",
+    "Agentic AI internship Delhi",
+    "AI engineer Delhi",
+    "AI startup Delhi",
+
+    "AI ML internship Hyderabad",
+    "GenAI internship Hyderabad",
+    "Machine Learning internship Hyderabad",
+    "AI engineer Hyderabad",
+    "AI startup Hyderabad",
+
+    "AI ML internship Chennai",
+    "GenAI internship Chennai",
+    "Machine Learning internship Chennai",
+    "AI engineer Chennai",
+    "AI startup Chennai",
+
+    "AI ML internship Kolkata",
+    "Machine Learning internship Kolkata",
+    "AI engineer Kolkata",
+
+    "AI ML internship Ahmedabad",
+    "Machine Learning internship Ahmedabad",
+    "AI engineer Ahmedabad",
+
+    "AI ML internship Noida",
+    "AI ML internship Gurgaon",
+    "AI engineer Noida",
+    "AI engineer Gurgaon",
+    "AI startup Noida",
+    "AI startup Gurgaon",
+
+    "AI ML internship Jaipur",
+    "AI engineer Jaipur",
+
+    "AI ML internship India",
+    "GenAI internship India",
+    "Machine Learning internship India",
+    "Agentic AI internship India",
+    "LLM internship India",
+    "AI engineer India",
+    "AI startup India",
+
+    "AI ML internship work from home",
+    "AI engineer work from home",
+    "Machine Learning internship work from home",
+    "GenAI internship work from home",
+
+    "AI ML internship worldwide",
+    "AI engineer worldwide remote",
+    "Machine Learning engineer worldwide remote",
+    "GenAI engineer worldwide remote",
+    "AI ML intern global remote",
+    "AI startup hiring remote global"
+  ],
+  "locations": ["Pune", "PCMC", "Pimpri-Chinchwad", "Remote", "Mumbai", "Thane", "Bangalore", "Bengaluru", "Delhi", "New Delhi", "NCR", "Noida", "Gurgaon", "Gurugram", "Hyderabad", "Chennai", "Kolkata", "Ahmedabad", "Jaipur", "India", "Work from home", "Worldwide"],
+
+  "seed_companies": [
+    { "name": "na", "website": "na" }
+  ],
+
+  "portals": {
+    "internshala": true,
+    "naukri": true,
+    "wellfound": true,
+    "indeed": true,
+    "yc": true,
+    "google_jobs": true
+  },
+
+  "recency_window_days": 7,
+
+  "request_settings": {
+    "min_delay_seconds": 1,
+    "max_delay_seconds": 3,
+    "max_requests_per_domain": 40,
+    "page_timeout_ms": 20000,
+    "max_retries": 3,
+    "ignore_robots_txt": true,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+  },
+
+  "crawl_settings": {
+    "max_pages_per_company": 20,
+    "discover_internal_links": true,
+    "parse_sitemap": true,
+    "concurrent_companies": 5,
+    "search_fallback_enabled": true
+  },
+
+  "email_settings": {
+    "collect_all_emails": true,
+    "min_priority_score": 25
+  },
+
+  "output": {
+    "db_path": "output/scraper.db",
+    "csv_dir": "output/",
+    "excel_path": "output/internship_leads.xlsx",
+    "log_path": "output/scrape_log.txt"
+  }
+}
