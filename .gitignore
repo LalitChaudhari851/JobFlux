@@ -40,11 +40,8 @@ venv.bak/
 .env.*.local
 
 # Scraper runtime outputs, databases & logs
-output/scraper.db*
-output/scrape_log.txt
-output/debug_*.html
-output/screenshot_*.png
-output/company_cache.json
+output/*
+!output/.gitkeep
 
 # IDE / Editor settings
 .vscode/
