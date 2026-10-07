@@ -88,7 +88,7 @@
         <!-- Search & Filter Card -->
         <div class="filter-card">
           <div class="filter-top-row">
-            <!-- Search Input -->
+            <!-- Search Input with Natural Language Support -->
             <div class="input-wrapper search-wrapper">
               <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -97,7 +97,7 @@
               <input 
                 type="text" 
                 id="roleSearchInput" 
-                placeholder="Search role or company" 
+                placeholder="Search naturally (e.g. 'Find GenAI internships in Pune involving RAG')" 
                 autocomplete="off"
               />
               <button id="clearSearchBtn" class="clear-btn" style="display: none;" title="Clear search">×</button>
@@ -141,6 +141,23 @@
                 <option value="On-site">On-site</option>
                 <option value="Hybrid">Hybrid</option>
               </select>
+            </div>
+          </div>
+
+          <!-- Natural Language Intent & Quick Suggestions -->
+          <div class="nl-context-row">
+            <div id="semanticIntentBadge" class="semantic-intent-badge" style="display: none;">
+              <span class="intent-icon">✨</span>
+              <span class="intent-prefix">Semantic Intent:</span>
+              <span class="intent-text" id="semanticIntentText">Understood intent</span>
+              <button class="clear-intent-btn" onclick="clearSemanticQuery()" title="Clear">×</button>
+            </div>
+
+            <div class="query-suggestions" id="querySuggestions">
+              <span class="suggestions-label">Try:</span>
+              <button type="button" class="suggestion-chip" onclick="applySuggestion('Find GenAI internships in Pune involving RAG')">"GenAI in Pune with RAG"</button>
+              <button type="button" class="suggestion-chip" onclick="applySuggestion('Remote AI Engineer internships for freshers')">"Remote AI Engineer for freshers"</button>
+              <button type="button" class="suggestion-chip" onclick="applySuggestion('Python and LangChain internships in Mumbai')">"Python & LangChain in Mumbai"</button>
             </div>
           </div>
 

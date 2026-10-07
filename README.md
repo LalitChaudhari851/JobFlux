@@ -42,12 +42,22 @@ Edit `config.json`:
 - `portals` — toggle which sites to scrape
 
 ## Run
-
+ 
+### 1. Run Scraper Pipeline
 ```bash
 python main.py
 ```
+Or run a fast test pass:
+```bash
+python main.py --test
+```
+Results land in `output/internship_leads.xlsx` and CSV files in `output/`.
 
-Results land in `output/internship_leads.xlsx`. Logs go to `output/scrape_log.txt`.
+### 2. Launch Local Web Dashboard
+```bash
+python server.py
+```
+Open **[http://localhost:8000](http://localhost:8000)** in your browser to view the clean, minimal SaaS dashboard with live search, filters, pagination, direct `Apply ↗` links, and verified company contacts.
 
 ## Important notes
 

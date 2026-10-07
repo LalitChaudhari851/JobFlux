@@ -103,6 +103,8 @@ function attachEventListeners() {
     state.q = '';
     state.page = 1;
     clearSearchBtn.style.display = 'none';
+    const badge = document.getElementById('semanticIntentBadge');
+    if (badge) badge.style.display = 'none';
     fetchJobs();
   });
 
@@ -262,6 +264,7 @@ async function fetchJobs() {
 
     renderJobs(data.jobs || []);
     renderPagination(data);
+    updateSemanticIntentBadge(data.parsed_intent);
   } catch (err) {
     console.error('Error fetching jobs:', err);
     jobsTableBody.innerHTML = `
@@ -319,7 +322,22 @@ function renderJobs(jobs) {
     // Role cell
     const roleCell = document.createElement('td');
     roleCell.className = 'col-role';
-    roleCell.innerHTML = `<span class="role-title">${escapeHtml(job.role)}</span>`;
+    let roleHtml = `
+      <div class="role-cell-wrap">
+        <div class="role-title-row">
+          <span class="role-title">${escapeHtml(job.role)}</span>
+          ${job.relevance_score ? `<span class="relevance-pill">${job.relevance_score}% match</span>` : ''}
+        </div>
+    `;
+    if (job.match_reasons && job.match_reasons.length > 0) {
+      roleHtml += `
+        <div class="match-reasons-row">
+          ${job.match_reasons.map(r => `<span class="match-tag">${escapeHtml(r)}</span>`).join('')}
+        </div>
+      `;
+    }
+    roleHtml += `</div>`;
+    roleCell.innerHTML = roleHtml;
 
     // Location cell
     const locationCell = document.createElement('td');
@@ -527,3 +545,49 @@ function copyToClipboard(text) {
     prompt('Copy to clipboard:', text);
   });
 }
+
+// ── Natural Language / Semantic Search Helpers ─────────────
+function updateSemanticIntentBadge(intent) {
+  const badge = document.getElementById('semanticIntentBadge');
+  const textEl = document.getElementById('semanticIntentText');
+  if (!badge || !textEl) return;
+
+  if (intent && intent.is_natural_language) {
+    const parts = [];
+    if (intent.locations && intent.locations.length) {
+      parts.push(`📍 ${intent.locations.join(', ')}`);
+    }
+    if (intent.work_mode) {
+      parts.push(`🏠 ${intent.work_mode}`);
+    }
+    if (intent.skills && intent.skills.length) {
+      parts.push(`⚡ ${intent.skills.join(', ')}`);
+    }
+    if (intent.freshers) {
+      parts.push(`🎓 Fresher/Intern`);
+    }
+    textEl.textContent = parts.join(' • ') || intent.query_clean;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+window.applySuggestion = function(text) {
+  if (!roleSearchInput) return;
+  roleSearchInput.value = text;
+  state.q = text.trim();
+  state.page = 1;
+  if (clearSearchBtn) clearSearchBtn.style.display = 'block';
+  fetchJobs();
+};
+
+window.clearSemanticQuery = function() {
+  if (roleSearchInput) roleSearchInput.value = '';
+  state.q = '';
+  state.page = 1;
+  if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+  const badge = document.getElementById('semanticIntentBadge');
+  if (badge) badge.style.display = 'none';
+  fetchJobs();
+};

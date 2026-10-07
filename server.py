@@ -229,6 +229,9 @@ def load_verified_contacts():
     return contacts
 
 
+from utils.semantic_search import semantic_search_jobs, parse_nl_query
+
+
 class DashboardHandler(SimpleHTTPRequestHandler):
     """Custom request handler serving static dashboard and REST API."""
 
@@ -308,19 +311,16 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         # ── API: Jobs with Search, Filters, Sorting, Pagination ─────
         if path == "/api/jobs":
             jobs = load_all_jobs()
+            parsed_intent = None
 
-            # 1. Search Query (title, company, description)
-            q = query_params.get("q", [""])[0].strip().lower()
+            # 1. Natural Language & Semantic Search
+            q = query_params.get("q", [""])[0].strip()
             if q:
-                jobs = [
-                    j for j in jobs
-                    if q in j.get("role", "").lower()
-                    or q in j.get("company", "").lower()
-                    or q in j.get("description", "").lower()
-                    or q in j.get("location", "").lower()
-                ]
+                search_res = semantic_search_jobs(jobs, q, threshold=15.0)
+                jobs = search_res["results"]
+                parsed_intent = search_res["parsed_intent"]
 
-            # 2. Location Filter (Tier-1 City Aliases)
+            # 2. Location Filter (Tier-1 City Aliases - optional override)
             loc_filter = query_params.get("location", [""])[0].strip().lower()
             if loc_filter and loc_filter not in ["all", "all locations", ""]:
                 alias_map = {
@@ -363,7 +363,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 jobs.sort(key=lambda j: j.get("role", "").lower())
             elif sort_by == "location_asc":
                 jobs.sort(key=lambda j: j.get("location", "").lower())
-            else:  # default posted newest
+            elif sort_by == "relevance" and q:
+                # Keep semantic relevance ranking
+                pass
+            elif not q:  # default posted newest when no query
                 jobs.sort(key=lambda j: j.get("posted_date") or "", reverse=True)
 
             total_count = len(jobs)
@@ -392,7 +395,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 "limit": limit,
                 "total_pages": (total_count + limit - 1) // limit if total_count > 0 else 1,
                 "start_index": start_num,
-                "end_index": end_num
+                "end_index": end_num,
+                "parsed_intent": parsed_intent
             }
             self.send_json(response)
             return
