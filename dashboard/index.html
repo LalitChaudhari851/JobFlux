@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Polar - Your internships at a glance</title>
+  <title>JobFlux - Your internships</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,22 +13,22 @@
   <!-- Top Navigation Header -->
   <header class="navbar">
     <div class="nav-container">
-      <div class="nav-brand">
-        <!-- Minimal Polar Wave Logo -->
+      <div class="nav-brand" onclick="navigateTo('home')">
+        <!-- Minimal Wave Logo -->
         <svg class="brand-logo" width="26" height="22" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M2 4.5C4.2 2.5 7.8 2.5 10 4.5C12.2 6.5 15.8 6.5 18 4.5C20.2 2.5 23.8 2.5 24 4.5" stroke="#111827" stroke-width="2.2" stroke-linecap="round"/>
           <path d="M2 11C4.2 9 7.8 9 10 11C12.2 13 15.8 13 18 11C20.2 9 23.8 9 24 11" stroke="#111827" stroke-width="2.2" stroke-linecap="round"/>
           <path d="M2 17.5C4.2 15.5 7.8 15.5 10 17.5C12.2 19.5 15.8 19.5 18 17.5C20.2 15.5 23.8 15.5 24 17.5" stroke="#111827" stroke-width="2.2" stroke-linecap="round"/>
         </svg>
-        <span class="brand-name">Polar</span>
+        <span class="brand-name">JobFlux</span>
       </div>
 
       <nav class="nav-menu">
-        <a href="#" class="nav-link">Home</a>
-        <a href="#" class="nav-link">About</a>
-        <a href="#" class="nav-link active">Dashboard</a>
-        <a href="#" class="nav-link">Profile</a>
-        <div class="user-avatar" title="User Profile">
+        <a href="#home" class="nav-link" id="nav-home" onclick="navigateTo('home')">Home</a>
+        <a href="#about" class="nav-link" id="nav-about" onclick="navigateTo('about')">About</a>
+        <a href="#dashboard" class="nav-link active" id="nav-dashboard" onclick="navigateTo('dashboard')">Dashboard</a>
+        <a href="#profile" class="nav-link" id="nav-profile" onclick="navigateTo('profile')">Profile</a>
+        <div class="user-avatar" onclick="navigateTo('profile')" title="User Profile">
           <div class="avatar-inner"></div>
         </div>
       </nav>
@@ -38,231 +38,393 @@
   <!-- Main Content Container -->
   <main class="main-content">
     
-    <!-- Page Header -->
-    <section class="page-header">
-      <span class="section-tag">DASHBOARD</span>
-      <h1 class="page-title">Your internships at a glance</h1>
-      <p class="page-subtitle">Track applications, filter by location and role, and jump straight to applications.</p>
-    </section>
+    <!-- =========================================================================
+         PAGE 1: DASHBOARD (Active Default View)
+         ========================================================================= -->
+    <div id="page-dashboard" class="page-section">
+      <!-- Page Header -->
+      <section class="page-header">
+        <span class="section-tag">DASHBOARD</span>
+        <h1 class="page-title">Your internships</h1>
+        <p class="page-subtitle">Track applications, filter by location and role, and jump straight to applications.</p>
+      </section>
 
-    <!-- Top KPI Quick Stats -->
-    <section class="stats-grid" id="statsGrid">
-      <div class="stat-card">
-        <span class="stat-label">TOTAL OPPORTUNITIES</span>
-        <div class="stat-value" id="statTotalJobs">-</div>
-        <span class="stat-meta">Active scraper listings</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">VERIFIED CONTACTS</span>
-        <div class="stat-value" id="statVerifiedEmails">-</div>
-        <span class="stat-meta">MX-confirmed outreach emails</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">REMOTE ROLES</span>
-        <div class="stat-value" id="statRemoteJobs">-</div>
-        <span class="stat-meta">Work from home / Global</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">PORTALS SCANNED</span>
-        <div class="stat-value" id="statPortals">-</div>
-        <span class="stat-meta" id="statPortalsList">Internshala, YC, Indeed...</span>
-      </div>
-    </section>
-
-    <!-- Tab View Switcher (Internships vs Verified Company Outreach) -->
-    <div class="view-tabs">
-      <button class="tab-btn active" id="tabJobs" onclick="switchView('jobs')">
-        Internships & Jobs
-      </button>
-      <button class="tab-btn" id="tabContacts" onclick="switchView('contacts')">
-        Verified Company Contacts <span class="tab-badge" id="contactsBadge">0</span>
-      </button>
-    </div>
-
-    <!-- VIEW 1: INTERNSHIPS (Matches Reference Image) -->
-    <div id="jobsViewSection">
-      <!-- Search & Filter Card -->
-      <div class="filter-card">
-        <div class="filter-top-row">
-          <!-- Search Input -->
-          <div class="input-wrapper search-wrapper">
-            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input 
-              type="text" 
-              id="roleSearchInput" 
-              placeholder="Search role or company" 
-              autocomplete="off"
-            />
-            <button id="clearSearchBtn" class="clear-btn" style="display: none;" title="Clear search">×</button>
-          </div>
-
-          <!-- Location Filter Input -->
-          <div class="input-wrapper location-wrapper">
-            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            <input 
-              type="text" 
-              id="locationInput" 
-              placeholder="Location (e.g. Pune, Remote, Bangalore)" 
-              list="locationSuggestions"
-              autocomplete="off"
-            />
-            <datalist id="locationSuggestions"></datalist>
-          </div>
-
-          <!-- Portal Filter Dropdown -->
-          <div class="input-wrapper select-wrapper portal-select-wrapper">
-            <select id="portalFilter">
-              <option value="all">All Portals</option>
-            </select>
-          </div>
-
-          <!-- Work Mode / Type Filter Dropdown -->
-          <div class="input-wrapper select-wrapper type-select-wrapper">
-            <select id="typeFilter">
-              <option value="all">All Work Modes</option>
-              <option value="Remote">Remote</option>
-              <option value="On-site">On-site</option>
-              <option value="Hybrid">Hybrid</option>
-            </select>
-          </div>
+      <!-- Top KPI Quick Stats -->
+      <section class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <span class="stat-label">TOTAL OPPORTUNITIES</span>
+          <div class="stat-value" id="statTotalJobs">-</div>
+          <span class="stat-meta">Active scraper listings</span>
         </div>
+        <div class="stat-card">
+          <span class="stat-label">VERIFIED CONTACTS</span>
+          <div class="stat-value" id="statVerifiedEmails">-</div>
+          <span class="stat-meta">MX-confirmed outreach emails</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">REMOTE ROLES</span>
+          <div class="stat-value" id="statRemoteJobs">-</div>
+          <span class="stat-meta">Work from home / Global</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">PORTALS SCANNED</span>
+          <div class="stat-value" id="statPortals">-</div>
+          <span class="stat-meta" id="statPortalsList">Internshala, YC, Indeed...</span>
+        </div>
+      </section>
 
-        <!-- Subrow: Count, Export, Rows per page -->
-        <div class="filter-bottom-row">
-          <div class="job-count-text" id="jobCountText">
-            Showing 0–0 of 0 internships
-          </div>
+      <!-- Tab View Switcher (Internships vs Verified Company Outreach) -->
+      <div class="view-tabs">
+        <button class="tab-btn active" id="tabJobs" onclick="switchView('jobs')">
+          Internships & Jobs
+        </button>
+        <button class="tab-btn" id="tabContacts" onclick="switchView('contacts')">
+          Verified Company Contacts <span class="tab-badge" id="contactsBadge">0</span>
+        </button>
+      </div>
 
-          <div class="filter-actions">
-            <button class="save-csv-btn" id="exportCsvBtn">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
+      <!-- VIEW 1: INTERNSHIPS (Matches Reference Image) -->
+      <div id="jobsViewSection">
+        <!-- Search & Filter Card -->
+        <div class="filter-card">
+          <div class="filter-top-row">
+            <!-- Search Input -->
+            <div class="input-wrapper search-wrapper">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
-              <span>Save CSV</span>
-            </button>
+              <input 
+                type="text" 
+                id="roleSearchInput" 
+                placeholder="Search role or company" 
+                autocomplete="off"
+              />
+              <button id="clearSearchBtn" class="clear-btn" style="display: none;" title="Clear search">×</button>
+            </div>
 
-            <div class="rows-per-page">
-              <label for="limitSelect">Rows per page</label>
-              <select id="limitSelect">
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
+            <!-- Location Filter Dropdown (Tier-1 Tech Cities) -->
+            <div class="input-wrapper location-wrapper select-wrapper">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <select id="locationInput">
+                <option value="all">All Locations</option>
+                <option value="Remote / Work from home">Remote / Work from home</option>
+                <option value="Pune">Pune</option>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Bangalore">Bangalore</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Delhi / NCR">Delhi / NCR</option>
+                <option value="Indore">Indore</option>
+                <option value="Nagpur">Nagpur</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Ahmedabad">Ahmedabad</option>
+                <option value="Kolkata">Kolkata</option>
+                <option value="Jaipur">Jaipur</option>
+              </select>
+            </div>
+
+            <!-- Portal Filter Dropdown -->
+            <div class="input-wrapper select-wrapper portal-select-wrapper">
+              <select id="portalFilter">
+                <option value="all">All Portals</option>
+              </select>
+            </div>
+
+            <!-- Work Mode / Type Filter Dropdown -->
+            <div class="input-wrapper select-wrapper type-select-wrapper">
+              <select id="typeFilter">
+                <option value="all">All Work Modes</option>
+                <option value="Remote">Remote</option>
+                <option value="On-site">On-site</option>
+                <option value="Hybrid">Hybrid</option>
               </select>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Main Internship Table Card -->
-      <div class="table-card">
-        <div class="table-responsive">
-          <table class="jobs-table" id="jobsTable">
-            <thead>
-              <tr>
-                <th class="col-company">Company</th>
-                <th class="col-role">Role</th>
-                <th class="col-location">Location</th>
-                <th class="col-portal">Portal</th>
-                <th class="col-type">Type</th>
-                <th class="col-posted">Posted</th>
-                <th class="col-action text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody id="jobsTableBody">
-              <!-- Dynamically populated rows -->
-              <tr>
-                <td colspan="7" class="loading-state">
-                  <div class="spinner"></div>
-                  <span>Loading internship opportunities...</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          <!-- Subrow: Count, Export, Rows per page -->
+          <div class="filter-bottom-row">
+            <div class="job-count-text" id="jobCountText">
+              Showing 0–0 of 0 internships
+            </div>
 
-        <!-- Pagination Controls -->
-        <div class="pagination-container" id="paginationContainer">
-          <button class="page-btn" id="prevPageBtn" disabled>
-            ← Previous
-          </button>
-          <div class="page-numbers" id="pageNumbers"></div>
-          <button class="page-btn" id="nextPageBtn" disabled>
-            Next →
-          </button>
-        </div>
-      </div>
-    </div>
+            <div class="filter-actions">
+              <button class="save-csv-btn" id="exportCsvBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Save CSV</span>
+              </button>
 
-    <!-- VIEW 2: VERIFIED COMPANY CONTACTS (Cold Outreach Targets) -->
-    <div id="contactsViewSection" style="display: none;">
-      <div class="filter-card">
-        <div class="filter-top-row">
-          <div class="input-wrapper search-wrapper full-width">
-            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input 
-              type="text" 
-              id="contactSearchInput" 
-              placeholder="Search companies, domain, or verified HR emails..." 
-              autocomplete="off"
-            />
+              <div class="rows-per-page">
+                <label for="limitSelect">Rows per page</label>
+                <select id="limitSelect">
+                  <option value="10" selected>10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="filter-bottom-row">
-          <div class="job-count-text" id="contactCountText">
-            Showing 0 verified contacts
+
+        <!-- Main Internship Table Card -->
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="jobs-table" id="jobsTable">
+              <thead>
+                <tr>
+                  <th class="col-company">Company</th>
+                  <th class="col-role">Role</th>
+                  <th class="col-location">Location</th>
+                  <th class="col-portal">Portal</th>
+                  <th class="col-type">Type</th>
+                  <th class="col-posted">Posted</th>
+                  <th class="col-action text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="jobsTableBody">
+                <tr>
+                  <td colspan="7" class="loading-state">
+                    <div class="spinner"></div>
+                    <span>Loading internship opportunities...</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="filter-actions">
-            <button class="save-csv-btn" onclick="exportContactsCsv()">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Export Contacts CSV</span>
+
+          <!-- Pagination Controls -->
+          <div class="pagination-container" id="paginationContainer">
+            <button class="page-btn" id="prevPageBtn" disabled>
+              ← Previous
+            </button>
+            <div class="page-numbers" id="pageNumbers"></div>
+            <button class="page-btn" id="nextPageBtn" disabled>
+              Next →
             </button>
           </div>
         </div>
       </div>
 
-      <div class="table-card">
-        <div class="table-responsive">
-          <table class="jobs-table">
-            <thead>
-              <tr>
-                <th>Company</th>
-                <th>Official Website</th>
-                <th>Verified Email</th>
-                <th>Priority Score</th>
-                <th>MX Status</th>
-                <th class="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody id="contactsTableBody">
-              <!-- Populated via JS -->
-            </tbody>
-          </table>
+      <!-- VIEW 2: VERIFIED COMPANY CONTACTS (Cold Outreach Targets) -->
+      <div id="contactsViewSection" style="display: none;">
+        <div class="filter-card">
+          <div class="filter-top-row">
+            <div class="input-wrapper search-wrapper full-width">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input 
+                type="text" 
+                id="contactSearchInput" 
+                placeholder="Search companies, domain, or verified HR emails..." 
+                autocomplete="off"
+              />
+            </div>
+          </div>
+          <div class="filter-bottom-row">
+            <div class="job-count-text" id="contactCountText">
+              Showing 0 verified contacts
+            </div>
+            <div class="filter-actions">
+              <button class="save-csv-btn" onclick="exportContactsCsv()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Export Contacts CSV</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="jobs-table">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Official Website</th>
+                  <th>Verified Email</th>
+                  <th>Priority Score</th>
+                  <th>MX Status</th>
+                  <th class="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="contactsTableBody">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         PAGE 2: HOME (Landing & Overview)
+         ========================================================================= -->
+    <div id="page-home" class="page-section" style="display: none;">
+      <section class="hero-section">
+        <span class="section-tag">AI/ML TALENT PIPELINE</span>
+        <h1 class="hero-title">Find high-signal internships in seconds.</h1>
+        <p class="hero-description">
+          JobFlux continuously aggregates verified engineering and AI/ML internship listings across multiple job portals, normalizes posting times, and uncovers verified company recruiter contacts.
+        </p>
+        <div class="hero-cta-group">
+          <button class="hero-btn-primary" onclick="navigateTo('dashboard')">
+            Open Dashboard ↗
+          </button>
+          <button class="hero-btn-secondary" onclick="navigateTo('dashboard'); switchView('contacts');">
+            View Verified Recruiter Contacts
+          </button>
+        </div>
+      </section>
+
+      <section class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-badge">🎯</div>
+          <h3 class="feature-title">Multi-Portal Aggregation</h3>
+          <p class="feature-text">Collects real-time job cards from Internshala, Y Combinator (Work at a Startup), Indeed, Naukri, and Google Jobs with automated deduplication.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-badge">✉️</div>
+          <h3 class="feature-title">Verified Direct HR Outreach</h3>
+          <p class="feature-text">Visits official company websites to retrieve publicly listed HR and talent addresses, verifying DNS MX records before adding them to your pipeline.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-badge">⏱️</div>
+          <h3 class="feature-title">Date Normalization</h3>
+          <p class="feature-text">Parses messy relative post times ("6 hours ago", "1 day ago") into real datetimes, highlighting Today and This Week listings so you apply early.</p>
+        </div>
+      </section>
+
+      <div class="home-status-card">
+        <div class="status-left">
+          <span class="status-indicator"></span>
+          <div>
+            <strong>Local Pipeline Active</strong>
+            <p style="color: #6B7280; font-size: 0.85rem; margin-top: 2px;">SQLite Incremental Tracking & WAL Journaling Active</p>
+          </div>
+        </div>
+        <button class="status-action-btn" onclick="navigateTo('dashboard')">View Live Opportunities →</button>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         PAGE 3: ABOUT (System Documentation & Ethics)
+         ========================================================================= -->
+    <div id="page-about" class="page-section" style="display: none;">
+      <section class="page-header">
+        <span class="section-tag">ABOUT JOBFLUX</span>
+        <h1 class="page-title">Automating early career discovery</h1>
+        <p class="page-subtitle">Built to give AI, Machine Learning, and Data Science candidates a clean, direct edge in internship applications.</p>
+      </section>
+
+      <div class="about-grid">
+        <div class="about-card">
+          <h3>The Core Architecture</h3>
+          <p>JobFlux works in 5 streamlined phases:</p>
+          <ul class="about-list">
+            <li><strong>Phase 1:</strong> Scrapes active search results from supported job portals with custom CSS selectors.</li>
+            <li><strong>Phase 2:</strong> Normalizes dates and filters listings within the configured recency window (7 days).</li>
+            <li><strong>Phase 3:</strong> Deduplicates records across portals using company, job title, and portal composite keys.</li>
+            <li><strong>Phase 4:</strong> Resolves official company domains via headless browser search fallback.</li>
+            <li><strong>Phase 5:</strong> Asynchronously crawls careers and contact pages to locate publicly visible HR mailboxes, running syntax and MX verification.</li>
+          </ul>
+        </div>
+
+        <div class="about-card">
+          <h3>Ethical Scraping & Integrity</h3>
+          <p>JobFlux follows responsible public-web practices:</p>
+          <ul class="about-list">
+            <li><strong>Rate Limiting:</strong> Random 1–3s delays between requests and strict per-domain request caps.</li>
+            <li><strong>Robots.txt:</strong> Automatic robots policy parsing to respect webmaster guidelines.</li>
+            <li><strong>No SMTP Ping Spam:</strong> Stops at DNS MX record confirmation to verify domain mail reception without pinging inboxes.</li>
+            <li><strong>Zero Fabrication:</strong> Only displays authentic application URLs collected directly from source portals.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         PAGE 4: PROFILE & PREFERENCES
+         ========================================================================= -->
+    <div id="page-profile" class="page-section" style="display: none;">
+      <section class="page-header">
+        <span class="section-tag">CANDIDATE PROFILE</span>
+        <h1 class="page-title">Profile & Preferences</h1>
+        <p class="page-subtitle">Manage your search criteria, target roles, and scraper configuration.</p>
+      </section>
+
+      <div class="profile-card">
+        <div class="profile-header">
+          <div class="profile-avatar-large"></div>
+          <div>
+            <h2 class="profile-name">Lalit Chaudhari</h2>
+            <p class="profile-email">lalitchoudhari851@gmail.com</p>
+            <span class="portal-badge" style="margin-top: 6px;">AI/ML & Data Science Candidate</span>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h4 class="profile-section-title">Target Roles</h4>
+          <div class="tag-cloud">
+            <span class="pref-tag">AI/ML Engineer Intern</span>
+            <span class="pref-tag">GenAI Developer Intern</span>
+            <span class="pref-tag">LLM Engineer</span>
+            <span class="pref-tag">Agentic AI Intern</span>
+            <span class="pref-tag">Machine Learning Research</span>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h4 class="profile-section-title">Preferred Locations</h4>
+          <div class="tag-cloud">
+            <span class="pref-tag">Pune, Maharashtra</span>
+            <span class="pref-tag">Bangalore, Karnataka</span>
+            <span class="pref-tag">Remote / Work from home</span>
+            <span class="pref-tag">Mumbai</span>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h4 class="profile-section-title">Active Scraper Portals</h4>
+          <div class="tag-cloud">
+            <span class="pref-tag active-tag">Internshala (Active)</span>
+            <span class="pref-tag active-tag">Y Combinator Startup (Active)</span>
+            <span class="pref-tag active-tag">Indeed (Active)</span>
+            <span class="pref-tag active-tag">Google Jobs (Active)</span>
+            <span class="pref-tag active-tag">Naukri (Active)</span>
+            <span class="pref-tag active-tag">Wellfound (Active)</span>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <button class="hero-btn-primary" onclick="navigateTo('dashboard')">
+            Back to Dashboard →
+          </button>
+          <button class="save-csv-btn" onclick="exportContactsCsv()">
+            Download Master Contacts CSV
+          </button>
         </div>
       </div>
     </div>
 
   </main>
 
+  <!-- Footer -->
   <footer class="footer">
     <div class="footer-container">
       <div class="footer-left">
-        <span class="footer-brand">Polar</span> — AI/ML Internship Intelligence & Automation
+        <span class="footer-brand">JobFlux</span> — AI/ML Internship Intelligence & Automation
       </div>
       <div class="footer-right">
         <span>Updated dynamically from live scraper database</span>

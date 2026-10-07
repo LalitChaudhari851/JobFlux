@@ -46,6 +46,33 @@ function debounce(func, delay = 250) {
   };
 }
 
+// ── Page Navigation (Home, About, Dashboard, Profile) ───────
+function navigateTo(page) {
+  state.currentPage = page;
+
+  // Update nav links active class
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.classList.remove('active');
+  });
+  const activeLink = document.getElementById(`nav-${page}`);
+  if (activeLink) {
+    activeLink.classList.add('active');
+  }
+
+  // Hide all page sections
+  document.querySelectorAll('.page-section').forEach(sec => {
+    sec.style.display = 'none';
+  });
+
+  // Show target page section
+  const targetSection = document.getElementById(`page-${page}`);
+  if (targetSection) {
+    targetSection.style.display = 'block';
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // ── Initialize Dashboard ────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   fetchStats();
@@ -53,6 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchJobs();
   fetchContacts();
   attachEventListeners();
+
+  // Handle URL hash routing if present
+  const hash = window.location.hash.replace('#', '');
+  if (['home', 'about', 'dashboard', 'profile'].includes(hash)) {
+    navigateTo(hash);
+  }
 });
 
 // ── Event Listeners ─────────────────────────────────────────
@@ -73,12 +106,12 @@ function attachEventListeners() {
     fetchJobs();
   });
 
-  // Location filter with debounce
-  locationInput.addEventListener('input', debounce((e) => {
+  // Location filter dropdown
+  locationInput.addEventListener('change', (e) => {
     state.location = e.target.value.trim();
     state.page = 1;
     fetchJobs();
-  }, 250));
+  });
 
   // Portal dropdown
   portalFilter.addEventListener('change', (e) => {
@@ -193,13 +226,14 @@ async function fetchFilterOptions() {
       });
     }
 
-    // Populate Location suggestions
-    if (data.locations) {
-      locationSuggestions.innerHTML = '';
+    // Populate Location Dropdown (Tier-1 Tech Cities)
+    if (data.locations && locationInput) {
+      locationInput.innerHTML = '';
       data.locations.forEach(loc => {
         const opt = document.createElement('option');
-        opt.value = loc;
-        locationSuggestions.appendChild(opt);
+        opt.value = (loc === 'All Locations') ? 'all' : loc;
+        opt.textContent = loc;
+        locationInput.appendChild(opt);
       });
     }
   } catch (err) {

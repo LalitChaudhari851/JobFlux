@@ -280,22 +280,27 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             jobs = load_all_jobs()
             portals = sorted(list({j.get("portal") for j in jobs if j.get("portal")}))
             
-            # Extract common cleaned locations
-            locations_set = set()
-            for j in jobs:
-                loc = j.get("location")
-                if loc:
-                    # Simplify compound locations
-                    for part in loc.split(","):
-                        cleaned = part.strip()
-                        if cleaned and len(cleaned) > 2 and not cleaned.isdigit():
-                            locations_set.add(cleaned)
+            tier_one_cities = [
+                "All Locations",
+                "Remote / Work from home",
+                "Pune",
+                "Mumbai",
+                "Bangalore",
+                "Hyderabad",
+                "Delhi / NCR",
+                "Indore",
+                "Nagpur",
+                "Chennai",
+                "Ahmedabad",
+                "Kolkata",
+                "Jaipur"
+            ]
             
             types = sorted(list({j.get("type") for j in jobs if j.get("type")}))
 
             self.send_json({
                 "portals": portals,
-                "locations": sorted(list(locations_set)),
+                "locations": tier_one_cities,
                 "types": types
             })
             return
@@ -315,10 +320,30 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     or q in j.get("location", "").lower()
                 ]
 
-            # 2. Location Filter
+            # 2. Location Filter (Tier-1 City Aliases)
             loc_filter = query_params.get("location", [""])[0].strip().lower()
-            if loc_filter and loc_filter != "all":
-                jobs = [j for j in jobs if loc_filter in j.get("location", "").lower()]
+            if loc_filter and loc_filter not in ["all", "all locations", ""]:
+                alias_map = {
+                    "pune": ["pune", "pcmc", "pimpri", "chinchwad", "baner", "hinjewadi", "kharadi"],
+                    "mumbai": ["mumbai", "bombay", "navi mumbai", "thane", "dombivli", "kalyan"],
+                    "bangalore": ["bangalore", "bengaluru", "banglore"],
+                    "hyderabad": ["hyderabad", "secunderabad", "hyd"],
+                    "delhi / ncr": ["delhi", "new delhi", "ncr", "noida", "gurgaon", "gurugram", "ghaziabad"],
+                    "delhi": ["delhi", "new delhi", "ncr", "noida", "gurgaon", "gurugram"],
+                    "indore": ["indore"],
+                    "nagpur": ["nagpur"],
+                    "chennai": ["chennai", "madras"],
+                    "ahmedabad": ["ahmedabad", "gandhinagar"],
+                    "kolkata": ["kolkata", "calcutta"],
+                    "jaipur": ["jaipur"],
+                    "remote": ["remote", "work from home", "wfh"],
+                    "remote / work from home": ["remote", "work from home", "wfh"],
+                }
+                keywords = alias_map.get(loc_filter, [loc_filter])
+                jobs = [
+                    j for j in jobs
+                    if any(kw in j.get("location", "").lower() for kw in keywords)
+                ]
 
             # 3. Portal Filter
             portal_filter = query_params.get("portal", [""])[0].strip()
