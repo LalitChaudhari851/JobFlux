@@ -389,10 +389,148 @@
     <div id="page-profile" class="page-section" style="display: none;">
       <section class="page-header">
         <span class="section-tag">CANDIDATE PROFILE</span>
-        <h1 class="page-title">Profile & Skills Matching</h1>
-        <p class="page-subtitle">Configure your candidate skills and target criteria. JobFlux uses these to calculate reproducible semantic match scores for every listing.</p>
+        <h1 class="page-title">Profile & Resume Intelligence</h1>
+        <p class="page-subtitle">Upload your resume or configure your skills. JobFlux extracts verified skills, technologies, experience, and projects to match you with top AI/ML opportunities.</p>
       </section>
 
+      <!-- =========================================================================
+           RESUME / PROFILE UNDERSTANDING & EXTRACTION CARD
+           ========================================================================= -->
+      <div class="resume-intelligence-card">
+        <div class="resume-card-header">
+          <div class="resume-header-icon">📄</div>
+          <div>
+            <h3 class="resume-header-title">Resume & Profile Intelligence</h3>
+            <p class="resume-header-desc">
+              Upload your PDF resume or paste text. JobFlux parses verified skills, technologies, experience level, and key projects to calculate real-time semantic match scores for all 284 listings.
+            </p>
+          </div>
+        </div>
+
+        <div class="resume-input-container">
+          <!-- Toggle: File Upload vs Textarea -->
+          <div class="resume-mode-tabs">
+            <button type="button" class="resume-tab-btn active" id="tabUploadPdf" onclick="switchResumeTab('upload')">
+              <span>📎 Upload Resume (PDF / TXT)</span>
+            </button>
+            <button type="button" class="resume-tab-btn" id="tabPasteText" onclick="switchResumeTab('paste')">
+              <span>✍️ Paste Resume Text / Markdown</span>
+            </button>
+          </div>
+
+          <!-- Tab 1: File Upload Dropzone -->
+          <div id="resumeUploadPane" class="resume-tab-pane">
+            <div class="resume-dropzone" id="resumeDropzone" onclick="document.getElementById('resumeFileInput').click()">
+              <input type="file" id="resumeFileInput" accept=".pdf,.txt,.md" style="display: none;" onchange="handleResumeFileSelect(event)" />
+              <div class="dropzone-content">
+                <div class="dropzone-icon">☁️</div>
+                <div class="dropzone-title">Click to upload or drag & drop your resume</div>
+                <div class="dropzone-hint">Supports PDF, Plain Text (.txt), or Markdown (.md)</div>
+                <div id="selectedFileName" class="selected-file-badge" style="display: none;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Paste Raw Text Pane -->
+          <div id="resumePastePane" class="resume-tab-pane" style="display: none;">
+            <textarea
+              id="resumeTextInput"
+              class="resume-textarea"
+              placeholder="Paste your resume content or LinkedIn summary here (e.g. Education, Technical Skills, Projects, Experience)..."
+              rows="7"
+            ></textarea>
+          </div>
+
+          <!-- Advanced Optional LLM toggle -->
+          <div class="resume-advanced-options">
+            <details>
+              <summary class="advanced-toggle-label">
+                <span>⚙️ Advanced: Optional LLM API Key (Groq / OpenAI)</span>
+                <span class="optional-tag">Optional</span>
+              </summary>
+              <div class="advanced-options-content">
+                <p class="advanced-hint">
+                  Left blank, the built-in deterministic NLP engine extracts all skills, experience, and projects locally with zero hallucination. Provide a Groq or OpenAI key if you want enhanced project bullet point synthesis. <em>Keys are processed strictly in-memory and never stored or logged.</em>
+                </p>
+                <input
+                  type="password"
+                  id="resumeApiKeyInput"
+                  class="api-key-input"
+                  placeholder="Enter Groq (gsk_...) or OpenAI (sk-...) API key (optional)"
+                  autocomplete="off"
+                />
+              </div>
+            </details>
+          </div>
+
+          <!-- Action Bar -->
+          <div class="resume-action-bar">
+            <button type="button" class="hero-btn-primary" id="btnExtractResume" onclick="triggerResumeExtraction()">
+              <span>✨ Extract & Understand Resume</span>
+            </button>
+            <button type="button" class="btn-clear-resume" onclick="clearResumeInput()">
+              Clear
+            </button>
+            <div id="resumeLoadingState" class="resume-loading-pill" style="display: none;">
+              <div class="spinner-small"></div>
+              <span>Analyzing profile & extracting skills...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================================
+             EXTRACTED RESUME RESULTS PREVIEW (Revealed upon extraction)
+             ========================================================================= -->
+        <div id="extractedProfileSection" class="extracted-profile-card" style="display: none;">
+          <div class="extracted-header">
+            <div class="extracted-title-row">
+              <span class="extracted-badge">✓ STRUCTURED RESUME INSIGHTS</span>
+              <span id="extractionModeBadge" class="extraction-mode-pill">Deterministic NLP (Zero Hallucination)</span>
+            </div>
+            <h3 class="extracted-headline" id="extractedCandidateHeadline">AI/ML Engineer & GenAI Intern</h3>
+            <p class="extracted-meta" id="extractedCandidateMeta">Lalit Chaudhari • Fresher / Intern • lalitchoudhari851@gmail.com</p>
+          </div>
+
+          <!-- Extracted Grid -->
+          <div class="extracted-grid">
+            <!-- 1. Skills & Tech -->
+            <div class="extracted-box">
+              <h5 class="extracted-box-title">Verified Skills & Technologies (<span id="extractedSkillsCount">0</span>)</h5>
+              <div class="extracted-tags-wrap" id="extractedSkillsTags"></div>
+            </div>
+
+            <!-- 2. Target Roles & Locations -->
+            <div class="extracted-box">
+              <h5 class="extracted-box-title">Target Roles & Preferred Cities</h5>
+              <div class="extracted-roles-wrap">
+                <div class="roles-sublabel">Roles:</div>
+                <div id="extractedRolesTags" class="extracted-tags-wrap"></div>
+                <div class="roles-sublabel" style="margin-top: 0.5rem;">Cities:</div>
+                <div id="extractedLocsTags" class="extracted-tags-wrap"></div>
+              </div>
+            </div>
+
+            <!-- 3. Key Projects -->
+            <div class="extracted-box full-width" id="extractedProjectsBox">
+              <h5 class="extracted-box-title">Extracted Key Projects</h5>
+              <div class="extracted-projects-list" id="extractedProjectsList"></div>
+            </div>
+          </div>
+
+          <!-- Apply Extracted Profile CTA -->
+          <div class="extracted-cta-banner">
+            <div>
+              <div class="cta-banner-title">Ready to match against 284 live internship listings?</div>
+              <div class="cta-banner-desc">Applying will sync your extracted skills with the candidate matching engine and recalculate match scores.</div>
+            </div>
+            <button type="button" class="hero-btn-primary" id="btnApplyExtracted" onclick="applyExtractedProfileToEngine()">
+              <span>🚀 Apply to JobFlux & View Matched Jobs →</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Profile & Skills Customizer -->
       <div class="profile-card">
         <div class="profile-header">
           <div class="profile-avatar-large"></div>

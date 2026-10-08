@@ -43,6 +43,15 @@ venv.bak/
 output/*
 !output/.gitkeep
 
+# Candidate private profile & uploaded resumes
+output/candidate/*
+output/resumes/*
+*.pdf
+*.docx
+*.doc
+candidate_profile.json
+candidate_resume.txt
+
 # IDE / Editor settings
 .vscode/
 .idea/

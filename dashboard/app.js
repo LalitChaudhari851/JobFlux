@@ -966,3 +966,234 @@ window.resetProfileToDefault = async function() {
     console.error('Error resetting profile:', err);
   }
 };
+
+// ── Resume & Profile Understanding Handlers ─────────────────
+state.selectedResumeFile = null;
+state.extractedProfileData = null;
+
+window.switchResumeTab = function(tab) {
+  const uploadBtn = document.getElementById('tabUploadPdf');
+  const pasteBtn = document.getElementById('tabPasteText');
+  const uploadPane = document.getElementById('resumeUploadPane');
+  const pastePane = document.getElementById('resumePastePane');
+
+  if (tab === 'upload') {
+    uploadBtn.classList.add('active');
+    pasteBtn.classList.remove('active');
+    uploadPane.style.display = 'flex';
+    pastePane.style.display = 'none';
+  } else {
+    pasteBtn.classList.add('active');
+    uploadBtn.classList.remove('active');
+    pastePane.style.display = 'flex';
+    uploadPane.style.display = 'none';
+  }
+};
+
+window.handleResumeFileSelect = function(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  state.selectedResumeFile = file;
+
+  const badge = document.getElementById('selectedFileName');
+  if (badge) {
+    const sizeKb = Math.round(file.size / 1024);
+    badge.textContent = `📄 ${file.name} (${sizeKb} KB)`;
+    badge.style.display = 'inline-flex';
+  }
+};
+
+window.clearResumeInput = function() {
+  state.selectedResumeFile = null;
+  state.extractedProfileData = null;
+  const fileInput = document.getElementById('resumeFileInput');
+  if (fileInput) fileInput.value = '';
+  const textInput = document.getElementById('resumeTextInput');
+  if (textInput) textInput.value = '';
+  const badge = document.getElementById('selectedFileName');
+  if (badge) badge.style.display = 'none';
+  const preview = document.getElementById('extractedProfileSection');
+  if (preview) preview.style.display = 'none';
+  const apiKey = document.getElementById('resumeApiKeyInput');
+  if (apiKey) apiKey.value = '';
+};
+
+window.triggerResumeExtraction = async function() {
+  const extractBtn = document.getElementById('btnExtractResume');
+  const loadingPill = document.getElementById('resumeLoadingState');
+  const apiKeyInput = document.getElementById('resumeApiKeyInput');
+  const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
+
+  let payload = {};
+
+  if (state.selectedResumeFile) {
+    const file = state.selectedResumeFile;
+    if (file.name.toLowerCase().endsWith('.pdf')) {
+      loadingPill.style.display = 'inline-flex';
+      extractBtn.disabled = true;
+
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const res = reader.result;
+          const base64Str = res.split(',')[1];
+          resolve(base64Str);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      payload = {
+        file_base64: base64Data,
+        filename: file.name,
+        api_key: apiKey || null
+      };
+    } else {
+      loadingPill.style.display = 'inline-flex';
+      extractBtn.disabled = true;
+      const textData = await file.text();
+      payload = {
+        text: textData,
+        filename: file.name,
+        api_key: apiKey || null
+      };
+    }
+  } else {
+    const textInput = document.getElementById('resumeTextInput');
+    const text = textInput ? textInput.value.trim() : '';
+    if (!text) {
+      alert('Please upload a resume file (PDF/TXT) or paste your resume text first.');
+      return;
+    }
+    payload = {
+      text: text,
+      filename: 'pasted_resume.txt',
+      api_key: apiKey || null
+    };
+    loadingPill.style.display = 'inline-flex';
+    extractBtn.disabled = true;
+  }
+
+  try {
+    const res = await fetch('/api/resume/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to parse resume');
+    }
+
+    state.extractedProfileData = data.profile;
+    renderExtractedResumeProfile(data.profile);
+
+    const preview = document.getElementById('extractedProfileSection');
+    if (preview) {
+      preview.style.display = 'flex';
+      preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  } catch (err) {
+    console.error('Error extracting resume:', err);
+    alert('Resume parsing error: ' + err.message);
+  } finally {
+    loadingPill.style.display = 'none';
+    extractBtn.disabled = false;
+  }
+};
+
+function renderExtractedResumeProfile(p) {
+  if (!p) return;
+
+  const headlineEl = document.getElementById('extractedCandidateHeadline');
+  const metaEl = document.getElementById('extractedCandidateMeta');
+  const modeBadge = document.getElementById('extractionModeBadge');
+  const countEl = document.getElementById('extractedSkillsCount');
+
+  if (headlineEl) headlineEl.textContent = p.headline || 'Candidate Profile';
+  if (metaEl) {
+    metaEl.textContent = `${p.name || 'Candidate'} • ${p.experience ? p.experience.level : (p.experience_level || 'Fresher')} • ${p.email || 'Email not provided'}`;
+  }
+  if (modeBadge) modeBadge.textContent = p.extraction_mode || 'Deterministic NLP (Zero Hallucination)';
+  if (countEl) countEl.textContent = p.skills_count || (p.skills ? p.skills.length : 0);
+
+  // Verified skills tags
+  const skillsWrap = document.getElementById('extractedSkillsTags');
+  if (skillsWrap) {
+    skillsWrap.innerHTML = (p.skills || []).map(skill => `
+      <span class="extracted-tag green">✓ ${escapeHtml(skill)}</span>
+    `).join('');
+  }
+
+  // Target roles
+  const rolesWrap = document.getElementById('extractedRolesTags');
+  if (rolesWrap) {
+    rolesWrap.innerHTML = (p.target_roles || []).map(role => `
+      <span class="extracted-tag">${escapeHtml(role)}</span>
+    `).join('');
+  }
+
+  // Preferred locations
+  const locsWrap = document.getElementById('extractedLocsTags');
+  if (locsWrap) {
+    locsWrap.innerHTML = (p.preferred_locations || []).map(loc => `
+      <span class="extracted-tag">📍 ${escapeHtml(loc)}</span>
+    `).join('');
+  }
+
+  // Projects
+  const projectsList = document.getElementById('extractedProjectsList');
+  if (projectsList) {
+    if (p.projects && p.projects.length > 0) {
+      projectsList.innerHTML = p.projects.map(proj => `
+        <div class="project-item-card">
+          <div class="project-title-row">
+            <span class="project-title">${escapeHtml(proj.title)}</span>
+          </div>
+          ${proj.tech_stack && proj.tech_stack.length > 0 ? `
+            <div class="project-tech-tags">
+              ${proj.tech_stack.map(t => `<span class="project-tech-pill">${escapeHtml(t)}</span>`).join('')}
+            </div>
+          ` : ''}
+          <div class="project-summary-text">${escapeHtml(proj.summary || '')}</div>
+        </div>
+      `).join('');
+    } else {
+      projectsList.innerHTML = `<span style="font-size: 0.8rem; color: #71717A;">No distinct project sections identified in text.</span>`;
+    }
+  }
+}
+
+window.applyExtractedProfileToEngine = async function() {
+  if (!state.extractedProfileData) return;
+  const btn = document.getElementById('btnApplyExtracted');
+  if (btn) btn.textContent = 'Applying & Recalculating...';
+
+  try {
+    const res = await fetch('/api/resume/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile: state.extractedProfileData })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to apply profile');
+
+    state.candidateProfile = data.profile;
+    renderProfileEditor();
+
+    if (btn) btn.textContent = 'Profile Applied Successfully! ✓';
+
+    // Reload jobs matching
+    state.page = 1;
+    fetchJobs();
+
+    setTimeout(() => {
+      navigateTo('dashboard');
+    }, 900);
+  } catch (err) {
+    console.error('Error applying profile:', err);
+    alert('Failed to apply extracted profile: ' + err.message);
+    if (btn) btn.textContent = 'Apply to JobFlux & View Matched Jobs →';
+  }
+};
+

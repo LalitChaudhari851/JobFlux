@@ -238,6 +238,11 @@ from utils.semantic_matcher import (
     get_available_skills,
     DEFAULT_CANDIDATE_PROFILE
 )
+from utils.resume_parser import (
+    parse_resume,
+    apply_resume_profile_to_matcher,
+    extract_text_from_pdf
+)
 
 
 class DashboardHandler(SimpleHTTPRequestHandler):
@@ -505,6 +510,55 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 return
             except Exception as e:
                 self.send_json({"success": False, "error": str(e)}, status=400)
+                return
+
+        # ── API: Resume Understanding & Extraction ───────────────────
+        if path == "/api/resume/parse":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+
+                raw_text = data.get("text", "")
+                filename = data.get("filename", "")
+                api_key = data.get("api_key", None)
+                file_base64 = data.get("file_base64", None)
+
+                if file_base64:
+                    import base64
+                    file_bytes = base64.b64decode(file_base64)
+                    if filename.lower().endswith(".pdf"):
+                        raw_text = extract_text_from_pdf(file_bytes)
+                    else:
+                        raw_text = file_bytes.decode("utf-8", errors="ignore")
+
+                if not raw_text or not raw_text.strip():
+                    self.send_json({"success": False, "error": "No resume text or valid document provided."}, status=400)
+                    return
+
+                parsed = parse_resume(raw_text, filename=filename, api_key=api_key)
+                self.send_json({"success": True, "profile": parsed})
+                return
+            except Exception as e:
+                self.send_json({"success": False, "error": f"Error parsing resume: {str(e)}"}, status=500)
+                return
+
+        # ── API: Apply Parsed Resume to Candidate Profile ────────────
+        if path == "/api/resume/apply":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                profile_payload = data.get("profile", data)
+                saved = apply_resume_profile_to_matcher(profile_payload)
+                self.send_json({
+                    "success": True,
+                    "message": "Candidate profile updated and job matching recalculated.",
+                    "profile": saved
+                })
+                return
+            except Exception as e:
+                self.send_json({"success": False, "error": f"Error applying profile: {str(e)}"}, status=500)
                 return
 
         self.send_response(404)
